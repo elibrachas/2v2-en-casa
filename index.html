@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<meta name="robots" content="noindex, nofollow">
+		<meta name="color-scheme" content="dark">
+		<title>2 vs 2 en Casa</title>
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏀</text></svg>">
+		<!-- Web shell of the Godot export (tools/build_web.sh). The front card loads the engine and the
+		pack in the background and starts the game on a click, so the browser lets the sound play and
+		can go fullscreen. It also wakes up the pads: browsers hide them until a button is pressed. -->
+		<style>
+:root {
+	--ink: #14101e;
+	--panel: #221a33;
+	--line: #4b3b6b;
+	--cream: #fff3c4;
+	--dim: #b9ac8c;
+	--yellow: #ffd23f;
+	--orange: #ffb347;
+	--blue: #8ec5ff;
+	--red: #ff6b6b;
+}
+
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: var(--cream);
+	background-color: var(--ink);
+	overflow: hidden;
+	touch-action: none;
+	font: 600 15px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#front {
+	position: fixed;
+	inset: 0;
+	overflow-y: auto;
+	background: var(--ink);
+	touch-action: pan-y;
+}
+
+.card {
+	box-sizing: border-box;
+	max-width: 780px;
+	margin: 0 auto;
+	padding: 20px 16px 32px;
+}
+
+.cover {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	image-rendering: pixelated;
+	border: 3px solid var(--line);
+	border-radius: 4px;
+	background: #000;
+}
+
+.start {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 20px;
+	margin: 16px 0 6px;
+}
+
+button {
+	font: inherit;
+	cursor: pointer;
+}
+
+#play {
+	font-size: 22px;
+	letter-spacing: 1px;
+	color: var(--ink);
+	background: var(--yellow);
+	border: 0;
+	border-bottom: 5px solid #b8860b;
+	border-radius: 6px;
+	padding: 10px 26px 7px;
+	min-width: 220px;
+}
+
+#play:disabled {
+	cursor: progress;
+	color: var(--dim);
+	background: var(--panel);
+	border-bottom-color: var(--line);
+}
+
+#play:not(:disabled):hover {
+	filter: brightness(1.08);
+}
+
+#play:not(:disabled):active {
+	transform: translateY(3px);
+	border-bottom-width: 2px;
+}
+
+#windowed {
+	color: var(--dim);
+	background: none;
+	border: 0;
+	padding: 4px 0;
+	text-decoration: underline;
+}
+
+#windowed:disabled {
+	visibility: hidden;
+}
+
+#bar {
+	height: 6px;
+	margin-top: 4px;
+	background: var(--panel);
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+#bar span {
+	display: block;
+	height: 100%;
+	width: 0;
+	background: var(--orange);
+	transition: width 0.2s;
+}
+
+.note {
+	color: var(--dim);
+	margin: 6px 0 0;
+}
+
+#pad {
+	margin: 14px 0 0;
+	padding: 10px 12px;
+	border: 2px dashed var(--line);
+	border-radius: 6px;
+}
+
+#pad.ready {
+	border-style: solid;
+	border-color: var(--blue);
+	color: var(--blue);
+}
+
+#notice {
+	display: none;
+	margin: 14px 0 0;
+	padding: 10px 12px;
+	border: 2px solid var(--red);
+	border-radius: 6px;
+	color: var(--red);
+	white-space: pre-line;
+}
+
+h2 {
+	font-size: 15px;
+	color: var(--yellow);
+	margin: 22px 0 8px;
+	letter-spacing: 1px;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+th, td {
+	text-align: left;
+	padding: 5px 8px;
+	border-bottom: 1px solid var(--panel);
+	vertical-align: top;
+}
+
+th {
+	color: var(--dim);
+	font-weight: 600;
+}
+
+td:first-child {
+	color: var(--dim);
+	white-space: nowrap;
+}
+
+.p1 {
+	color: var(--orange);
+}
+
+.p2 {
+	color: var(--blue);
+}
+
+ul {
+	margin: 0;
+	padding-left: 20px;
+}
+
+li {
+	margin: 3px 0;
+}
+
+.table-wrap {
+	overflow-x: auto;
+}
+
+@media (max-width: 520px) {
+	body {
+		font-size: 13px;
+	}
+
+	th, td {
+		padding: 4px 4px;
+	}
+}
+
+#fullscreen {
+	position: fixed;
+	right: 12px;
+	bottom: 12px;
+	padding: 6px 10px;
+	color: var(--cream);
+	background: rgba(20, 16, 30, 0.8);
+	border: 2px solid var(--line);
+	border-radius: 6px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s;
+}
+
+#fullscreen.show {
+	opacity: 1;
+	pointer-events: auto;
+}
+		</style>
+		
+	</head>
+	<body>
+		<canvas id="canvas">
+			Tu navegador no puede mostrar el juego.
+		</canvas>
+
+		<noscript>
+			Para jugar hace falta activar JavaScript.
+		</noscript>
+
+		<div id="front">
+			<div class="card">
+				<img class="cover" src="cover.png" alt="2 vs 2 en Casa">
+				<div class="start">
+					<button id="play" disabled>CARGANDO…</button>
+					<button id="windowed" disabled>o jugar en la ventana</button>
+				</div>
+				<div id="bar"><span></span></div>
+				<p class="note" id="hint">Se abre en pantalla completa; con Esc volvés a la ventana.</p>
+				<p class="note" id="touch" hidden>Se juega en una compu, con teclado o joystick.</p>
+				<div id="pad">🎮 ¿Tenés joystick (PlayStation, Xbox o de PC)? Enchufalo y apretá cualquier botón para que el navegador lo vea.</div>
+				<div id="notice"></div>
+
+				<h2>CONTROLES</h2>
+				<div class="table-wrap">
+					<table>
+						<tr><th></th><th>Joystick</th><th class="p1">P1 teclado</th><th class="p2">P2 teclado</th></tr>
+						<tr><td>Mover</td><td>Palanca o cruz</td><td>W A S D</td><td>Flechas</td></tr>
+						<tr><td>Tiro / salto</td><td>✕ · A</td><td>F</td><td>K</td></tr>
+						<tr><td>Pase / robo</td><td>○ · B</td><td>G</td><td>L</td></tr>
+						<tr><td>Turbo</td><td>□ · X · gatillos</td><td>Shift</td><td>J</td></tr>
+						<tr><td>Súper</td><td>△ · Y</td><td>H</td><td>Ñ</td></tr>
+						<tr><td>Pausa</td><td>Start / Options</td><td colspan="2">Enter · P · Esc</td></tr>
+					</table>
+				</div>
+
+				<h2>CÓMO SE JUEGA</h2>
+				<ul>
+					<li>Al 11, un punto adentro y dos de afuera del arco. Si cambia la pelota, ¡hay que salir!</li>
+					<li>Mantené el tiro y soltalo arriba del salto. Un toque rápido es un amague.</li>
+					<li>Con turbo hacia el aro: bandeja (y desde 6 puntos, volcada). Ojo, que con turbo te roban más.</li>
+					<li>Contra la compu, cualquier joystick maneja a P1. En P1 VS P2, el primer joystick es P1 y el segundo P2; el teclado sirve para los dos.</li>
+					<li>Anda mejor en Chrome o Edge.</li>
+				</ul>
+			</div>
+		</div>
+
+		<button id="fullscreen">⛶ Pantalla completa</button>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":11334096,"index.wasm":37686550},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = false;
+
+(function () {
+	const canvas = document.getElementById('canvas');
+	const front = document.getElementById('front');
+	const play = document.getElementById('play');
+	const windowed = document.getElementById('windowed');
+	const bar = document.querySelector('#bar span');
+	const padBox = document.getElementById('pad');
+	const notice = document.getElementById('notice');
+	const fullscreen = document.getElementById('fullscreen');
+
+	const exe = GODOT_CONFIG['executable'];
+	const pack = GODOT_CONFIG['mainPack'] || `${exe}.pck`;
+	let loaded = false;
+	let started = false;
+
+	if (navigator.maxTouchPoints > 0 && window.matchMedia('(hover: none)').matches) {
+		document.getElementById('touch').hidden = false;
+	}
+
+	function fail(err) {
+		console.error(err);
+		const text = err instanceof Error ? err.message : String(err);
+		notice.textContent = `No se pudo cargar el juego.\n${text}`;
+		notice.style.display = 'block';
+		front.hidden = false;
+		play.textContent = 'ERROR';
+	}
+
+	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (missing.length !== 0) {
+		fail(`A este navegador le falta:\n${missing.join('\n')}\nProbá con Chrome o Edge actualizados.`);
+		return;
+	}
+
+	const engine = new Engine(Object.assign({}, GODOT_CONFIG, {
+		'canvas': canvas,
+		'onProgress': function (current, total) {
+			if (total > 0) {
+				const percent = Math.min(100, Math.floor((current / total) * 100));
+				bar.style.width = `${percent}%`;
+				if (!loaded) {
+					play.textContent = percent < 100 ? `CARGANDO… ${percent}%` : 'PREPARANDO…';
+				}
+			}
+		},
+	}));
+
+	// Download the engine and the game while the card is up.
+	Promise.all([engine.init(exe), engine.preloadFile(pack, pack)]).then(function () {
+		loaded = true;
+		bar.style.width = '100%';
+		play.textContent = '¡A JUGAR!';
+		play.disabled = false;
+		windowed.disabled = false;
+		play.focus();
+	}, fail);
+
+	function isFullscreen() {
+		return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+	}
+
+	function goFullscreen() {
+		const root = document.documentElement;
+		const request = root.requestFullscreen || root.webkitRequestFullscreen;
+		if (request && !isFullscreen()) {
+			try {
+				const result = request.call(root);
+				if (result && result.catch) {
+					result.catch(function () {});
+				}
+			} catch (e) {
+				// Some browsers refuse; the game still runs in the window.
+			}
+		}
+	}
+
+	function start(full) {
+		if (!loaded || started) {
+			return;
+		}
+		started = true;
+		if (full) {
+			goFullscreen();
+		}
+		front.hidden = true;
+		engine.start({ 'args': ['--main-pack', pack] }).then(function () {
+			canvas.focus();
+		}, fail);
+	}
+
+	play.addEventListener('click', function () {
+		start(true);
+	});
+	windowed.addEventListener('click', function () {
+		start(false);
+	});
+	document.addEventListener('keydown', function (event) {
+		if (started) {
+			return;
+		}
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			start(event.target !== windowed);
+		}
+	});
+
+	// The fullscreen button shows up for a moment when the mouse moves over a windowed game.
+	let hideTimer = 0;
+	document.addEventListener('mousemove', function () {
+		if (!started || isFullscreen()) {
+			return;
+		}
+		fullscreen.classList.add('show');
+		clearTimeout(hideTimer);
+		hideTimer = setTimeout(function () {
+			fullscreen.classList.remove('show');
+		}, 2500);
+	});
+	fullscreen.addEventListener('click', function () {
+		goFullscreen();
+		fullscreen.classList.remove('show');
+		fullscreen.blur();
+		canvas.focus();
+	});
+	fullscreen.addEventListener('mousedown', function (event) {
+		// Keep the keyboard on the game.
+		event.preventDefault();
+	});
+
+	// Pads: browsers report them after a button press. Name the kind the way the game does.
+	function padKind(id) {
+		const lower = id.toLowerCase();
+		const vendor = (/vendor: ([0-9a-f]{4})/i.exec(id) || /^([0-9a-f]{1,4})-[0-9a-f]{1,4}-/i.exec(id) || [])[1];
+		const code = vendor ? parseInt(vendor, 16) : -1;
+		if (code === 0x054c || /playstation|dualshock|dualsense|ps[345]/.test(lower)) {
+			return 'PlayStation';
+		}
+		if (code === 0x057e || /nintendo|switch|joy-con/.test(lower)) {
+			return 'Nintendo';
+		}
+		if (code === 0x045e || /xbox|xinput/.test(lower)) {
+			return 'Xbox';
+		}
+		return 'de PC';
+	}
+
+	function watchPads() {
+		if (started) {
+			return;
+		}
+		let pads = [];
+		try {
+			pads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean);
+		} catch (e) {
+			pads = [];
+		}
+		if (pads.length > 0) {
+			const names = pads.map(function (p) {
+				return padKind(p.id);
+			});
+			padBox.classList.add('ready');
+			padBox.textContent = pads.length === 1
+				? `🎮 Joystick ${names[0]} listo. Hacé clic en ¡A JUGAR!`
+				: `🎮 ${pads.length} joysticks listos (${names.join(' y ')}). El primero es P1 en P1 VS P2.`;
+		}
+		requestAnimationFrame(watchPads);
+	}
+	watchPads();
+}());
+		</script>
+	</body>
+</html>
+
