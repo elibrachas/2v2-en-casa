@@ -273,7 +273,7 @@ li {
 				<div id="bar"><span></span></div>
 				<p class="note" id="hint">Se abre en pantalla completa; con Esc volvés a la ventana.</p>
 				<p class="note" id="touch" hidden>Se juega en una compu, con teclado o joystick.</p>
-				<div id="pad">🎮 ¿Tenés joystick (PlayStation, Xbox o de PC)? Enchufalo y apretá cualquier botón para que el navegador lo vea.</div>
+				<div id="pad">🎮 ¿Tenés joystick (PlayStation, Xbox o de PC)? Enchufalo, hacé clic en esta página y después apretá un botón del joystick, para que el navegador se lo entregue al juego.</div>
 				<div id="notice"></div>
 
 				<h2>CONTROLES</h2>
@@ -304,7 +304,7 @@ li {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":12210924,"index.wasm":37686550},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":12212396,"index.wasm":37686550},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 
 (function () {
@@ -453,6 +453,40 @@ const GODOT_THREADS_ENABLED = false;
 		return 'de PC';
 	}
 
+	window.addEventListener('gamepadconnected', function (e) {
+		console.log('[joystick] conectado', e.gamepad.index, e.gamepad.id, 'mapping=' + e.gamepad.mapping);
+	});
+	window.addEventListener('gamepaddisconnected', function (e) {
+		console.log('[joystick] desconectado', e.gamepad.index);
+	});
+	// After the game starts, log every button press the browser sees (once a second at most).
+	let lastLog = 0;
+	function logPads() {
+		let pads = [];
+		try {
+			pads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean);
+		} catch (e) {
+			pads = [];
+		}
+		const now = Date.now();
+		pads.forEach(function (p) {
+			const pressed = p.buttons.map(function (b, i) { return b.pressed ? i : -1; }).filter(function (i) { return i >= 0; });
+			const moved = p.axes.some(function (a) { return Math.abs(a) > 0.5; });
+			if ((pressed.length || moved) && now - lastLog > 1000) {
+				lastLog = now;
+				console.log('[joystick]', p.index, p.id, 'mapping=' + p.mapping, 'botones=' + pressed.join(','), 'ejes=' + p.axes.map(function (a) { return a.toFixed(1); }).join(','));
+			}
+		});
+		requestAnimationFrame(logPads);
+	}
+	logPads();
+
+	// Browsers hand a pad to a page only after the page got a click AND a pad button was pressed
+	// while the page was focused, in that order: the card says which step is missing.
+	let activated = false;
+	document.addEventListener('pointerdown', function () {
+		activated = true;
+	}, true);
 	function watchPads() {
 		if (started) {
 			return;
@@ -462,6 +496,9 @@ const GODOT_THREADS_ENABLED = false;
 			pads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean);
 		} catch (e) {
 			pads = [];
+		}
+		if (pads.length === 0 && activated && !padBox.classList.contains('ready')) {
+			padBox.textContent = '🎮 Si tenés joystick, apretá ahora un botón (con esta página al frente) para que el navegador lo vea.';
 		}
 		if (pads.length > 0) {
 			const names = pads.map(function (p) {
